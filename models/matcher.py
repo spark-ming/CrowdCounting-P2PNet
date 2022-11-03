@@ -1,4 +1,3 @@
-
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
 Mostly copy-paste from DETR (https://github.com/facebookresearch/detr).
@@ -30,7 +29,7 @@ class HungarianMatcher_Crowd(nn.Module):
 
     @torch.no_grad()
     def forward(self, outputs, targets):
-        """ Performs the matching
+        """Performs the matching
 
         Params:
             outputs: This is a dict that contains at least these entries:
@@ -52,8 +51,12 @@ class HungarianMatcher_Crowd(nn.Module):
         bs, num_queries = outputs["pred_logits"].shape[:2]
 
         # We flatten to compute the cost matrices in a batch
-        out_prob = outputs["pred_logits"].flatten(0, 1).softmax(-1)  # [batch_size * num_queries, num_classes]
-        out_points = outputs["pred_points"].flatten(0, 1)  # [batch_size * num_queries, 2]
+        out_prob = (
+            outputs["pred_logits"].flatten(0, 1).softmax(-1)
+        )  # [batch_size * num_queries, num_classes]
+        out_points = outputs["pred_points"].flatten(
+            0, 1
+        )  # [batch_size * num_queries, 2]
 
         # Also concat the target labels and points
         # tgt_ids = torch.cat([v["labels"] for v in targets])
@@ -75,9 +78,19 @@ class HungarianMatcher_Crowd(nn.Module):
         C = C.view(bs, num_queries, -1).cpu()
 
         sizes = [len(v["point"]) for v in targets]
-        indices = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))]
-        return [(torch.as_tensor(i, dtype=torch.int64), torch.as_tensor(j, dtype=torch.int64)) for i, j in indices]
+        indices = [
+            linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))
+        ]
+        return [
+            (
+                torch.as_tensor(i, dtype=torch.int64),
+                torch.as_tensor(j, dtype=torch.int64),
+            )
+            for i, j in indices
+        ]
 
 
 def build_matcher_crowd(args):
-    return HungarianMatcher_Crowd(cost_class=args.set_cost_class, cost_point=args.set_cost_point)
+    return HungarianMatcher_Crowd(
+        cost_class=args.set_cost_class, cost_point=args.set_cost_point
+    )
